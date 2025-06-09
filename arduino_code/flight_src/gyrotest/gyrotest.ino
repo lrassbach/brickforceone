@@ -1,5 +1,5 @@
 #include <Servo.h>
-#include <IRremote.h>
+//#include <IRremote.h>
 
 /*
 bow: front (WASHINGTON)
@@ -18,7 +18,7 @@ int portPotValue;
 int starboardPotValue;
 
 const int RECV_PIN_IR = 5;
-IRrecv irrecv(RECV_PIN_IR);
+//IRrecv irrecv(RECV_PIN_IR);
 
 void setup() {
   bowPotValue = 0; // (value between 0 and 180)
@@ -76,7 +76,7 @@ void loop() {
         frontPotValue--;
         backPotValue--;
       }
-      irrecv.resume();
+  //    irrecv.resume();
       Serial.println(frontPotValue);
       Serial.println(backPotValue);
   }*/
