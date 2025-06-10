@@ -34,11 +34,11 @@ void setup() {
   sternESC.attach(7,1000,2000); // (pin, min pulse width, max pulse width in microseconds) 
   sternESC.write(sternPotValue);
 
-  // Attach E ESC on pin 8
+  // Attach starboard ESC on pin 8
   starboardESC.attach(8,1000,2000); // (pin, min pulse width, max pulse width in microseconds) 
   starboardESC.write(starboardPotValue);
 
-  // Attach W ESC on pin 9
+  // Attach port ESC on pin 9
   portESC.attach(9,1000,2000); // (pin, min pulse width, max pulse width in microseconds) 
   portESC.write(portPotValue);
 
@@ -80,9 +80,10 @@ void loop() {
       Serial.println(frontPotValue);
       Serial.println(backPotValue);
   }*/
-
-  
-  
-
-  
+  if (Serial.available() > 0) {
+	  String incomingData = Serial.readStringUntil('\n');
+	  int newSpeed = incomingData.toInt();
+	  bowPotValue = newSpeed;
+	  bowESC.write(newSpeed);
+  }
 }

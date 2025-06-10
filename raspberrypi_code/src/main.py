@@ -14,10 +14,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 ########################################
 
 # Motor GPIO's (not pin number, GPIO number) ###
-gpio_motor1 = 2 # front left, clockwise
-gpio_motor2 = 28 # front right, counter clockwise
-gpio_motor3 = 15 # rear left, counter clockwise
-gpio_motor4 = 16 # rear right, clockwise
+gpio_motor1 = 6 # bow
+gpio_motor2 = 13 # stern
+gpio_motor3 = 19 # port
+gpio_motor4 = 26 # starboard
 
 # i2c pins used for MPU-6050
 gpio_i2c_sda = 12
@@ -55,18 +55,21 @@ pid_yaw_kd:float = 0.0
 ########################################
 ########################################
 
-import machine
 import time
-import ibus
+#import ibus
 import toolkit
+from gpiozero import PWMOutputDevice
+import mpu6050
+
+mpu6050 = mpu6050.mpu6050(0x68)
 
 # THE FLIGHT CONTROL LOOP
 def run() -> None:
     
     print("Hello from Scout!")
-
+    '''
     # flash the LED a few times to show the microcontroller has received power and the program is active
-    led = machine.Pin(25, machine.Pin.OUT) # the onboard LED of the Raspberry Pi Pico
+    led = machine.Pin(17, machine.Pin.OUT) # the onboard LED of the Raspberry Pi Pico
     for x in range(8):
         led.on()
         time.sleep(0.1)
@@ -82,6 +85,7 @@ def run() -> None:
     print("Overclocked to 250,000,000")
 
     # set up RC receiver
+    
     rc:ibus.IBus = ibus.IBus(rc_uart)
     print("RC receiver set up")
 
@@ -93,7 +97,7 @@ def run() -> None:
         if rc_data[5] == 2000: # flight mode on
             FATAL_ERROR("Flight mode detected as on (from RC transmitter) as soon as power was received. As a safety precaution, mode switch needs to be in standby mode when system is powered up.")
         time.sleep(0.025)
-
+    
     # Print settings that are important
     print("Roll PID: " + str(pid_roll_kp) + ", " + str(pid_roll_ki) + ", " + str(pid_roll_kd))
     print("Pitch PID: " + str(pid_pitch_kp) + ", " + str(pid_pitch_ki) + ", " + str(pid_pitch_kd))
@@ -128,18 +132,18 @@ def run() -> None:
         print("MPU-6050 Gyro Scale set to " + str(gs) + " correctly.")
     else:
         FATAL_ERROR("ERROR! MPU-6050 gyro scale did not set correctly. " + str(gs) + " returned.")
-
     # measure gyro bias
+    '''
     print("Measuring gyro bias...")
     gxs:list[float] = []
     gys:list[float] = []
     gzs:list[float] = []
-    started_at_ticks_ms:int = time.ticks_ms()
-    while ((time.ticks_ms() - started_at_ticks_ms) / 1000) < 3.0:
-        gyro_data = i2c.readfrom_mem(mpu6050_address, 0x43, 6) # read 6 bytes (2 for each axis)
-        gyro_x = (translate_pair(gyro_data[0], gyro_data[1]) / 65.5)
-        gyro_y = (translate_pair(gyro_data[2], gyro_data[3]) / 65.5)
-        gyro_z = (translate_pair(gyro_data[4], gyro_data[5]) / 65.5) * -1 # multiply by -1 because of the way I have it mounted on the quadcopter - it may be upside down. I want a "yaw to the right" to be positive and a "yaw to the left" to be negative.
+    started_at_ticks_ms:int = time.time()
+    while ((time.time() - started_at_ticks_ms)) < 3.0:
+        gyroscope_data = mpu6050.get_gyro_data() # read 6 bytes (2 for each axis)
+        gyro_x = (gyroscope_data["x"])
+        gyro_y = (gyroscope_data["y"])
+        gyro_z = (gyroscope_data["z"])
         gxs.append(gyro_x)
         gys.append(gyro_y)
         gzs.append(gyro_z)
@@ -149,7 +153,10 @@ def run() -> None:
     gyro_bias_z = sum(gzs) / len(gzs)
     print("Gyro bias: " + str((gyro_bias_x, gyro_bias_y, gyro_bias_z)))
 
+
+    # TODO - upgrade code to connect to motors
     # Set up PWM's
+    '''
     M1:machine.PWM = machine.PWM(machine.Pin(gpio_motor1))
     M2:machine.PWM = machine.PWM(machine.Pin(gpio_motor2))
     M3:machine.PWM = machine.PWM(machine.Pin(gpio_motor3))
@@ -159,6 +166,11 @@ def run() -> None:
     M3.freq(250)
     M4.freq(250)
     print("Motor PWM's set up @ 250 hz")
+    '''
+    M1 = PWMOutputDevice(gpio_motor1, frequency=50)
+    M2 = PWMOutputDevice(gpio_motor2, frequency=50)
+    M3 = PWMOutputDevice(gpio_motor3, frequency=50)
+    M4 = PWMOutputDevice(gpio_motor4, frequency=50)
 
     # Constants calculations / state variables - no need to calculate these during the loop (save processor time)
     cycle_time_seconds:float = 1.0 / target_cycle_hz
@@ -178,40 +190,40 @@ def run() -> None:
     yaw_last_error:float = 0.0
 
     # INFINITE LOOP
-    led.on() # turn on the onboard LED to signal that the flight controller is now active
+    # led.on() # turn on the onboard LED to signal that the flight controller is now active
     print("-- BEGINNING FLIGHT CONTROL LOOP NOW --")
     try:
         while True:
             
             # mark start time
-            loop_begin_us:int = time.ticks_us()
+            loop_begin_us:int = time.time()
 
             # Capture raw IMU data
             # we divide by 65.5 here because that is the modifier to use at a gyro range scale of 1, which we are using.
-            gyro_data = i2c.readfrom_mem(mpu6050_address, 0x43, 6) # read 6 bytes (2 for each axis)
-            gyro_x = ((translate_pair(gyro_data[0], gyro_data[1]) / 65.5) - gyro_bias_x) * -1 # Roll rate. we multiply by -1 here because of the way I have it mounted. it should be rotated 180 degrees I believe, but it's okay, I can flip it here. 
-            gyro_y = (translate_pair(gyro_data[2], gyro_data[3]) / 65.5) - gyro_bias_y # Pitch rate.
-            gyro_z = ((translate_pair(gyro_data[4], gyro_data[5]) / 65.5) * -1) - gyro_bias_z # Yaw rate. multiply by -1 because of the way I have it mounted - it may be upside down. I want a "yaw to the right" to be positive and a "yaw to the left" to be negative.
-
+            gyroscope_data = mpu6050.get_gyro_data() # read 6 bytes (2 for each axis)
+            gyro_x = ((gyroscope_data["x"]) - gyro_bias_x) # Roll rate. we multiply by -1 here because of the way I have it mounted. it should be rotated 180 degrees I believe, but it's okay, I can flip it here. 
+            gyro_y = (gyroscope_data["y"]) - gyro_bias_y # Pitch rate.
+            gyro_z = (gyroscope_data["z"]) - gyro_bias_z # Yaw rate. multiply by -1 because of the way I have it mounted - it may be upside down. I want a "yaw to the right" to be positive and a "yaw to the left" to be negative.
+            print(gyroscope_data)
             # Read control commands from RC
-            rc_data = rc.read()
+            #rc_data = rc.read()
 
             # normalize all RC input values
-            input_throttle:float = normalize(rc_data[3], 1000.0, 2000.0, 0.0, 1.0) # between 0.0 and 1.0
-            input_pitch:float = (normalize(rc_data[2], 1000.0, 2000.0, -1.0, 1.0)) * -1 # between -1.0 and 1.0. We multiply by -1 because... If the pitch is "full forward" (i.e. 75), that means we want a NEGATIVE pitch (when a plane pitches it's nose down, that is negative, not positive. And when a place pitches it's nose up, pulling back on the stick, it's positive, not negative.) Thus, we need to flip it.
-            input_roll:float = normalize(rc_data[1], 1000.0, 2000.0, -1.0, 1.0) # between -1.0 and 1.0
-            input_yaw:float = normalize(rc_data[4], 1000.0, 2000.0, -1.0, 1.0) # between -1.0 and 1.0
+            input_throttle:float = 0 # normalize(rc_data[3], 1000.0, 2000.0, 0.0, 1.0) # between 0.0 and 1.0
+            input_pitch:float = 0 #(normalize(rc_data[2], 1000.0, 2000.0, -1.0, 1.0)) * -1 # between -1.0 and 1.0. We multiply by -1 because... If the pitch is "full forward" (i.e. 75), that means we want a NEGATIVE pitch (when a plane pitches it's nose down, that is negative, not positive. And when a place pitches it's nose up, pulling back on the stick, it's positive, not negative.) Thus, we need to flip it.
+            input_roll:float = 0 # normalize(rc_data[1], 1000.0, 2000.0, -1.0, 1.0) # between -1.0 and 1.0
+            input_yaw:float = 0 # normalize(rc_data[4], 1000.0, 2000.0, -1.0, 1.0) # between -1.0 and 1.0
 
             # ADJUST MOTOR OUTPUTS!
             # based on channel 5. Channel 5 I have assigned to the switch that determines flight mode (standby/flight)
-            if rc_data[5] == 1000: # standby mode - switch in "up" or OFF position
+            if False: # standby mode - switch in "up" or OFF position
             
                 # turn motors off completely
                 duty_0_percent:int = calculate_duty_cycle(0.0)
-                M1.duty_ns(duty_0_percent)
-                M2.duty_ns(duty_0_percent)
-                M3.duty_ns(duty_0_percent)
-                M4.duty_ns(duty_0_percent)
+                M1.value = 0
+                M2.value = 0
+                M3.value = 0
+                M4.value = 0
 
                 # reset PID's
                 roll_last_integral = 0.0
@@ -224,7 +236,7 @@ def run() -> None:
                 # set last mode
                 last_mode = False # False means standby mode
 
-            elif rc_data[5] == 2000: # flight mode (idle props at least) - swith in "down" or ON position
+            elif True: # flight mode (idle props at least) - swith in "down" or ON position
 
                 # if last mode was standby (we JUST were turned onto flight mode), perform a check that the throttle isn't high. This is a safety mechanism
                 # this prevents an accident where the flight mode switch is turned on but the throttle position is high, which would immediately apply heavy throttle to each motor, shooting it into the air.
@@ -268,11 +280,17 @@ def run() -> None:
                 t3:float = adj_throttle - pid_pitch + pid_roll + pid_yaw
                 t4:float = adj_throttle - pid_pitch - pid_roll - pid_yaw
 
+                # TODO - write motor speed
                 # Adjust throttle according to input
-                M1.duty_ns(calculate_duty_cycle(t1))
-                M2.duty_ns(calculate_duty_cycle(t2))
-                M3.duty_ns(calculate_duty_cycle(t3))
-                M4.duty_ns(calculate_duty_cycle(t4))
+                print("t-values")
+                print(t1)
+                print(t2)
+                print(t3)
+                print(t4)
+                M1.value = 0.2
+                M2.value = 0.2
+                M3.value = 0.2
+                M4.value = 0.2
 
                 # Save state values for next loop
                 roll_last_error = error_rate_roll
@@ -287,30 +305,26 @@ def run() -> None:
 
             else: # the input from channel 5 is unexpected
                 print("Channel 5 input '" + str(rc_data[5]) + "' not valid. Is the transmitter turned on and connected?")
-
+            # Dev: sleep one second to view routine
+            time.sleep(1)
             # mark end time
-            loop_end_us:int = time.ticks_us()
+            loop_end_us:int = time.time()
 
             # wait to make the hz correct
             elapsed_us:int = loop_end_us - loop_begin_us
-            if elapsed_us < cycle_time_us:
-                time.sleep_us(cycle_time_us - elapsed_us)
+            #if elapsed_us < cycle_time_us:
+            #    time.sleep_us(cycle_time_us - elapsed_us)
         
 
     except Exception as e: # something went wrong. Flash the LED so the pilot sees it
 
         # before we do anything, turn the motors OFF
-        duty_0_percent:int = calculate_duty_cycle(0.0)
-        M1.duty_ns(duty_0_percent)
-        M2.duty_ns(duty_0_percent)
-        M3.duty_ns(duty_0_percent)
-        M4.duty_ns(duty_0_percent)
+        M1.value = 0
+        M2.value = 0
+        M3.value = 0
+        M4.value = 0
 
-        # deinit
-        M1.deinit()
-        M2.deinit()
-        M3.deinit()
-        M4.deinit()
+        
         
         FATAL_ERROR(str(e))
 
