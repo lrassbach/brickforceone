@@ -12,7 +12,7 @@ try:
     # Get input from the user (example)
     message = input("Enter message to send: ")
     if(message == "quit"):
-        ser.write(str(0).encode() + b'\n') 
+        ser.write(str("0,0,0,0").encode() + b'\n') 
         ser.close()
         print("Serial port closed.")
         quit()
@@ -22,6 +22,6 @@ try:
     print("Sent:", message)
     
 except KeyboardInterrupt:
-    ser.write(str(0) + b'\n') 
+    ser.write(str("0,0,0,0") + b'\n') 
     ser.close()
     print("Serial port closed.")

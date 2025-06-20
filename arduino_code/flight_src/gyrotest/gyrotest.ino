@@ -63,6 +63,7 @@ int* processIncomingMotorCommand(String in){
     if(in[i] == ','){
       out[index] = current.toInt();
       current = "";
+      index++;
     }
     else if (i == in.length()-1)
     {
