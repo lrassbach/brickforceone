@@ -1,6 +1,8 @@
 import time
 import numpy as np
 
+# simple PID. math taken from https://www.digikey.com/en/maker/tutorials/2024/implementing-a-pid-controller-algorithm-in-python
+
 class PID:
     def __init__(self, initial_process_variable=0, k_proportional=1.0, k_integral=0.1,k_derivative=0.05, timestep=0.1):
         self.name = "PID"
