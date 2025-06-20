@@ -4,8 +4,8 @@ import time
 class BasicMPU:
     def __init__(self):
         self.mpu =  mpu6050.mpu6050(0x68)
-        self.accel_bias = 0
-        self.gyro_bias = 0
+        self.accel_bias = {"x" : 0, "y" : 0, "z" : 0}
+        self.gyro_bias = {"x" : 0, "y" : 0, "z" : 0}
 
     def collect_bias(self):
         time.sleep(5)
