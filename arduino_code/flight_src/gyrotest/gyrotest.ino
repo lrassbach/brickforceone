@@ -56,7 +56,7 @@ output will be int[Bow,Stern,Starboard,Port]
 */
 
 int[] processIncomingMotorCommand(String in){
-  int out[4];
+  int * out = new int[4];
   String current = "";
   int index = 0;
   for(int i = 0; i < in.length(); i++){
@@ -80,8 +80,9 @@ int[] processIncomingMotorCommand(String in){
 void loop() {
   if (Serial.available() > 0) {
 	  String incomingData = Serial.readStringUntil('\n');
-	  int[] commands = processIncomingMotorCommand(incomingData);
+	  int * commands = processIncomingMotorCommand(incomingData);
 	  bowPotValue = commands[0];
 	  bowESC.write(newSpeed);
+    delete commands;
   }
 }
