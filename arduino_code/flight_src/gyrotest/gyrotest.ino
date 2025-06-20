@@ -55,7 +55,7 @@ newline will be dropped by serial read function
 output will be int[Bow,Stern,Starboard,Port]
 */
 
-int[] processIncomingMotorCommand(String in){
+int* processIncomingMotorCommand(String in){
   int * out = new int[4];
   String current = "";
   int index = 0;
