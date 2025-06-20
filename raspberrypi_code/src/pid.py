@@ -52,4 +52,3 @@ def test():
         print(f"setpoint={setpoint}; process variable={pid.process_variable};control={control};iteration={i}")
         # time.sleep(1)
 
-test()
