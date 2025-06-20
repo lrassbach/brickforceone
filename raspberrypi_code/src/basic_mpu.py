@@ -13,11 +13,15 @@ class BasicMPU:
     def read_sensor_data(self):
         # Read the accelerometer values
         accelerometer_data = self.mpu.get_accel_data()
-	accelerometr_data["x"] -= self.accel_bias["x"]
+	    accelerometer_data["x"] -= self.accel_bias["x"]
+        accelerometer_data["y"] -= self.accel_bias["y"]
+        accelerometer_data["z"] -= self.accel_bias["z"]
 
         # Read the gyroscope values
         gyroscope_data = self.mpu.get_gyro_data()
-
+	    gyroscope_data["x"] -= self.gyro_bias["x"]
+        gyroscope_data["y"] -= self.gyro_bias["y"]
+        gyroscope_data["z"] -= self.gyro_bias["z"]
         # Read temp
         temperature = self.mpu.get_temp()
 
