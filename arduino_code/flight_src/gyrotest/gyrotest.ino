@@ -82,7 +82,7 @@ void loop() {
 	  String incomingData = Serial.readStringUntil('\n');
 	  int * commands = processIncomingMotorCommand(incomingData);
 	  bowPotValue = commands[0];
-	  bowESC.write(newSpeed);
+	  bowESC.write(bowPotValue);
     delete commands;
   }
 }
