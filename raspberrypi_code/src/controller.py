@@ -18,4 +18,6 @@ class BFOController:
     
     def start(self):
         self.motor_controller.start()
-        
+        self.mpu.collect_bias()
+        while True:
+            

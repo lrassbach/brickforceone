@@ -48,42 +48,40 @@ void setup() {
   bowESC.write(bowPotValue);
 }
 
+/*
+incoming commands will be formatted as
+"Bow,Stern,Starboard,Port\n"
+newline will be dropped by serial read function
+output will be int[Bow,Stern,Starboard,Port]
+*/
+
+int[] processIncomingMotorCommand(String in){
+  int out[4];
+  String current = "";
+  int index = 0;
+  for(int i = 0; i < in.length(); i++){
+    if(in[i] == ','){
+      out[index] = current.toInt();
+      current = "";
+    }
+    else if (i == in.length()-1)
+    {
+      current = current + in[i];
+      out[index] = current.toInt();
+      current = "";
+    }
+    else {
+      current = current + in[i];
+    }
+  }
+  return out;
+}
+
 void loop() {
-  /*
-  if (irrecv.decode()){
-      Serial.println(irrecv.decodedIRData.decodedRawData, HEX);
-      if(irrecv.decodedIRData.decodedRawData == 0xBF40FF00){
-        frontPotValue = 10;
-        backPotValue = 16;      
-      }
-      else if(irrecv.decodedIRData.decodedRawData == 0xF609FF00){
-        frontPotValue += 10;
-        backPotValue +=10;
-      }
-      else if(irrecv.decodedIRData.decodedRawData == 0xF807FF00){
-        frontPotValue -= 10;
-        backPotValue -= 10;
-      }
-      else if(irrecv.decodedIRData.decodedRawData == 0xBA45FF00){
-        frontPotValue = 0;
-        backPotValue = 0;
-      } 
-      else if(irrecv.decodedIRData.decodedRawData == 0xB946FF00){
-        frontPotValue++;
-        backPotValue++;
-      }
-      else if(irrecv.decodedIRData.decodedRawData == 0xEA15FF00){
-        frontPotValue--;
-        backPotValue--;
-      }
-  //    irrecv.resume();
-      Serial.println(frontPotValue);
-      Serial.println(backPotValue);
-  }*/
   if (Serial.available() > 0) {
 	  String incomingData = Serial.readStringUntil('\n');
-	  int newSpeed = incomingData.toInt();
-	  bowPotValue = newSpeed;
+	  int[] commands = processIncomingMotorCommand(incomingData);
+	  bowPotValue = commands[0];
 	  bowESC.write(newSpeed);
   }
 }
