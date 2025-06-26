@@ -79,17 +79,18 @@ int* processIncomingMotorCommand(String in){
 }
 
 void loop() {
+// TODO add a control for wrong or null values
   if (Serial.available() > 0) {
-	  String incomingData = Serial.readStringUntil('\n');
-	  int * commands = processIncomingMotorCommand(incomingData);
-	  bowPotValue = commands[0];
-	  sternPotValue = commands[1];
+    String incomingData = Serial.readStringUntil('\n');
+    int * commands = processIncomingMotorCommand(incomingData);
+    bowPotValue = commands[0];
+    sternPotValue = commands[1];
     starboardPotValue = commands[2];
     portPotValue = commands[3];
     bowESC.write(bowPotValue);
     sternESC.write(sternPotValue);
     starboardESC.write(starboardPotValue);
-    portPotValue.write(portPotValue);
+    portESC.write(portPotValue);
     delete commands;
   }
 }
