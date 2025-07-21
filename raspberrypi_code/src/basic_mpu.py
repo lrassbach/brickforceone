@@ -8,8 +8,10 @@ class BasicMPU:
         self.gyro_bias = {"x" : 0, "y" : 0, "z" : 0}
 
     def collect_bias(self):
+        print("collecting bias...")
         time.sleep(5)
         self.accel_bias, self.gyro_bias, temperature = self.read_sensor_data()
+        print("done")
 
     # Define a function to read the sensor data
     def read_sensor_data(self):
@@ -28,6 +30,18 @@ class BasicMPU:
         temperature = self.mpu.get_temp()
 
         return accelerometer_data, gyroscope_data, temperature
-    
-mpu = BasicMPU()
-mpu.collect_bias()
+
+if __name__ == "__main__":
+    mpu = BasicMPU()
+    mpu.collect_bias()
+    while True:
+            # Read the sensor data
+        accelerometer_data, gyroscope_data, temperature = mpu.read_sensor_data()
+
+        # Print the sensor data
+        print("Accelerometer data:", accelerometer_data)
+        print("Gyroscope data:", gyroscope_data)
+        print("Temp:", temperature)
+
+        # Wait for 1 second
+        time.sleep(1)
