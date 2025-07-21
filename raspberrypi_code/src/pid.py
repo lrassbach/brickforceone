@@ -1,5 +1,5 @@
 import time
-import numpy as np
+# import numpy as np
 
 # simple PID. math taken from https://www.digikey.com/en/maker/tutorials/2024/implementing-a-pid-controller-algorithm-in-python
 
@@ -42,9 +42,10 @@ def test():
     # begin simulation loop
     for i in range(1000):
         # every ten iterations take a new "reading" from a sensor, simulate noise
-        if(i % 10 == 0 or i ==0):
-            rand_process_var = np.random.randn() + 10
-            pid.set_process_variable(pv=rand_process_var)
+#        if(i % 10 == 0 or i ==0):
+  #          rand_process_var = np.random.randn() + 10
+ #           rand_process_var = 10
+#	    pid.set_process_variable(pv=rand_process_var)
         control = pid.correction()
         # simulation of sending the correction of  to the output and receiving a new sensor reading
         updated_sensor_reading = pid.get_process_variable() + (control * pid.dt)

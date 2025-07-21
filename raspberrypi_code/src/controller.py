@@ -27,6 +27,7 @@ class BFOController:
         self.acclerometer_x_tolerance = 0.2
         self.acclerometer_y_tolerance = 0.2
         self.acclerometer_z_tolerance = 0 # TODO
+        self.command = "maintain"
 
     def send_command(self):
         self.command =  "maintain" # in future, this will be where commands are received. For now, only command is to hold position
