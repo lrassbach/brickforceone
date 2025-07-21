@@ -50,5 +50,7 @@ def test():
         updated_sensor_reading = pid.get_process_variable() + (control * pid.dt)
         pid.set_process_variable(updated_sensor_reading)
         print(f"setpoint={setpoint}; process variable={pid.process_variable};control={control};iteration={i}")
-        # time.sleep(1)
+        time.sleep(1)
 
+if __name__ == "__main__":
+    test()
