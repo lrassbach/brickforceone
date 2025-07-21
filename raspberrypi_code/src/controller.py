@@ -53,3 +53,7 @@ class BFOController:
             if self.command == "maintain":
                 accelerometer_data, gyroscope_data, temperature = self.mpu.read_sensor_data()
                 self.convert_accel_data_to_action(accelerometer_data)
+
+if __name__ == "__main__":
+    controller = BFOController()
+    controller.start()

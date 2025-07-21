@@ -26,7 +26,6 @@ while True:
 
     # Print the sensor data
     print("Accelerometer data:", accelerometer_data)
-    print("Accelerometer data X:", accelerometer_data["x"])
     print("Gyroscope data:", gyroscope_data)
     print("Temp:", temperature)
 
