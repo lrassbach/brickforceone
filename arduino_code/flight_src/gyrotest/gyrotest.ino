@@ -80,6 +80,7 @@ int* processIncomingMotorCommand(String in){
 
 void loop() {
 // TODO add a control for wrong or null values
+
   if (Serial.available() > 0) {
     String incomingData = Serial.readStringUntil('\n');
     int * commands = processIncomingMotorCommand(incomingData);
@@ -93,4 +94,5 @@ void loop() {
     portESC.write(portPotValue);
     delete commands;
   }
+
 }
